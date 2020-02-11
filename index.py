@@ -68,25 +68,28 @@ def sample_data(data, num_sample):
 
 
 def get_csv_data(path_list_arr):
-    type_serial=0
-    count=0
+    # 创建空的定维数组
+    sum_data = np.empty([0, 2048, 3], dtype=float)
+    type_data = np.empty([0, 1], dtype=int)
+    # 类型序号
+    type_serial = 0
+    # 遍历每个类型的目录
     for path_list in path_list_arr:
+        # 每个目录对应一种类型的数据
         type_serial += 1
-        print('这是第',type_serial,'类数据')
-        sub_count=0
+        # 遍历每个csv文件
         for path in path_list:
-            data_placeholder = np.empty([1024, 3], dtype=float)
+            # 将每个csv文件读取为Numpy的数据
             data = np.genfromtxt(path, delimiter=',',dtype=None)
-            data_len = len(data)
-            empty_len = 2048 - data_len
+            # 计算空值补缺的数量
+            empty_len = 2048 - len(data)
+            # 完整的2048个元数据=csv文件数据+空值数据
             data_full = np.append(data, np.empty([empty_len, 3], dtype=float), axis=0)
-            print(len(data_full))
-            sub_count+=1
-            count+=1
-        print('小类总计：【',sub_count,'】')
-        print(np.append(np.empty([0, 3], dtype=float), [[1, 1, 1]], axis=0))
-    print('总计：【',count,'】')
-    return []
+            # 数据归并
+            sum_data = np.append(sum_data, [data_full], axis=0)
+            # 数据类型归并
+            type_data = np.append(type_data, [[type_serial]], axis=0)
+    return sum_data, type_data
 
 if __name__ == "__main__":
 
@@ -95,8 +98,22 @@ if __name__ == "__main__":
     train_csv_list = get_csv_list(TRAIN_CSV_PATH)
     test_csv_list = get_csv_list(TEST_CSV_PATH)
 
-    train_data = get_csv_data(train_csv_list)
-    # test_data = get_csv_data(test_csv_list)
+    train_data, train_type_data = get_csv_data(train_csv_list)
+    test_data, test_type_data = get_csv_data(test_csv_list)
+
+    open("plant_train.h5", 'w')
+    with h5py.File('plant_train.h5', 'r+') as f:
+        f.create_dataset('data', data=train_data)
+        f.create_dataset('faceId', data=np.empty([2048,2048], dtype=float))
+        f.create_dataset('label', data=train_type_data)
+        f.create_dataset('normal', data=train_data)
+
+    open("plant_test.h5", 'w')
+    with h5py.File('plant_test.h5', 'r+') as f:
+        f.create_dataset('data', data=test_data)
+        f.create_dataset('faceId', data=np.empty([2048,2048], dtype=float))
+        f.create_dataset('label', data=test_type_data)
+        f.create_dataset('normal', data=test_data)
 
     # DATA_FILES = getDataFiles(os.path.join(BASE_DIR, 'file_path.txt'))
     # num_sample = 4096
@@ -114,7 +131,7 @@ if __name__ == "__main__":
 #     # train and test number, save data
 #     if not os.path.exists('plant_train.h5'):
 #         with h5py.File('plant_train.h5') as f:
-#             f['data'] = output[0:7, 0:3]
+#             f.create_dataset('data', data=output[0:7, 0:3])
 #             f['labels'] = output[0:8, 4]
 
 #     if not os.path.exists('plant_test.h5'):
