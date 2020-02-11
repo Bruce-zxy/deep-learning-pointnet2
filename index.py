@@ -77,12 +77,14 @@ def get_csv_data(path_list_arr):
         for path in path_list:
             data_placeholder = np.empty([1024, 3], dtype=float)
             data = np.genfromtxt(path, delimiter=',',dtype=None)
-            print(len(data))
-            print(data_placeholder)
+            data_len = len(data)
+            empty_len = 2048 - data_len
+            data_full = np.append(data, np.empty([empty_len, 3], dtype=float), axis=0)
+            print(len(data_full))
             sub_count+=1
             count+=1
-            # print(data)
         print('小类总计：【',sub_count,'】')
+        print(np.append(np.empty([0, 3], dtype=float), [[1, 1, 1]], axis=0))
     print('总计：【',count,'】')
     return []
 
