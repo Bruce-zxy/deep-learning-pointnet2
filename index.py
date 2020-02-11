@@ -71,7 +71,7 @@ def get_csv_data(path_list_arr):
     sum_data = np.empty([0, 1024, 3], dtype=np.float32)
     type_data = np.empty([0, 1], dtype=np.int32)
     # 类型序号
-    type_serial = 0
+    type_serial = -1
     # 遍历每个类型的目录
     for path_list in path_list_arr:
         # 每个目录对应一种类型的数据
