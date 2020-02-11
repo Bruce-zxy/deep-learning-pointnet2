@@ -25,16 +25,16 @@ sys.path.append(BASE_DIR)
 #     return point_xyz, label
 
 
-# def change_scale(data):
-#     #centre
-#     xyz_min = np.min(data[:, 0:3], axis=0)
-#     xyz_max = np.max(data[:, 0:3], axis=0)
-#     xyz_move = xyz_min+(xyz_max-xyz_min)/2
-#     data[:, 0:3] = data[:, 0:3]-xyz_move
-#     #scale
-#     scale = np.max(data[:, 0:3])
-#     data[:, 0:3] = data[:, 0:3]/scale
-#     return data
+def change_scale(data):
+    #centre
+    xyz_min = np.min(data[:, 0:3], axis=0)
+    xyz_max = np.max(data[:, 0:3], axis=0)
+    xyz_move = xyz_min+(xyz_max-xyz_min)/2
+    data[:, 0:3] = data[:, 0:3]-xyz_move
+    #scale
+    scale = np.max(data[:, 0:3])
+    data[:, 0:3] = data[:, 0:3]/scale
+    return data
 
 
 # def sample_data(data, num_sample):
@@ -68,8 +68,8 @@ def get_csv_list(path):
 
 def get_csv_data(path_list_arr):
     # 创建空的定维数组
-    sum_data = np.empty([0, 1024, 3], dtype=float)
-    type_data = np.empty([0, 1], dtype=int)
+    sum_data = np.empty([0, 1024, 3], dtype=np.float32)
+    type_data = np.empty([0, 1], dtype=np.int32)
     # 类型序号
     type_serial = 0
     # 遍历每个类型的目录
@@ -79,11 +79,11 @@ def get_csv_data(path_list_arr):
         # 遍历每个csv文件
         for path in path_list:
             # 将每个csv文件读取为Numpy的数据
-            data = np.genfromtxt(path, delimiter=',',dtype=None)
+            data = np.genfromtxt(path, delimiter=',', dtype=np.float32)
             # 计算空值补缺的数量
             empty_len = 1024 - len(data)
             # 完整的1024个元数据=csv文件数据+空值数据
-            data_full = np.append(data, np.empty([empty_len, 3], dtype=float), axis=0)
+            data_full = np.append(change_scale(data), np.empty([empty_len, 3], dtype=np.float32), axis=0)
             # 数据归并
             sum_data = np.append(sum_data, [data_full], axis=0)
             # 数据类型归并
@@ -103,14 +103,14 @@ if __name__ == "__main__":
     open("plant_train.h5", 'w')
     with h5py.File('plant_train.h5', 'r+') as f:
         f.create_dataset('data', data=train_data)
-        f.create_dataset('faceId', data=np.empty([1024,1024], dtype=float))
+        f.create_dataset('faceId', data=np.empty([1024,1024], dtype=np.float32))
         f.create_dataset('label', data=train_type_data)
         f.create_dataset('normal', data=train_data)
 
     open("plant_test.h5", 'w')
     with h5py.File('plant_test.h5', 'r+') as f:
         f.create_dataset('data', data=test_data)
-        f.create_dataset('faceId', data=np.empty([1024,1024], dtype=float))
+        f.create_dataset('faceId', data=np.empty([1024,1024], dtype=np.float32))
         f.create_dataset('label', data=test_type_data)
         f.create_dataset('normal', data=test_data)
 
