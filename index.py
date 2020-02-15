@@ -4,6 +4,7 @@
 import os
 import sys
 import re
+import random
 import numpy as np
 import h5py
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -32,7 +33,7 @@ def change_scale(data):
     xyz_move = xyz_min+(xyz_max-xyz_min)/2
     data[:, 0:3] = data[:, 0:3]-xyz_move
     #scale
-    scale = np.max(data[:, 0:3])
+    scale = np.max(np.sqrt(np.sum(abs(data[:, 0:3])**2, axis=-1)))
     data[:, 0:3] = data[:, 0:3]/scale
     return data
 
@@ -68,8 +69,8 @@ def get_csv_list(path):
 
 def get_csv_data(path_list_arr):
     # 创建空的定维数组
-    sum_data = np.empty([0, 1024, 3], dtype=np.float32)
-    type_data = np.empty([0, 1], dtype=np.int32)
+    sum_data = np.empty([0, 1024, 3], dtype=np.dtype('<f4'))
+    type_data = np.empty([0, 1], dtype=np.dtype('|u1'))
     # 类型序号
     type_serial = -1
     # 遍历每个类型的目录
@@ -79,21 +80,30 @@ def get_csv_data(path_list_arr):
         # 遍历每个csv文件
         for path in path_list:
             # 将每个csv文件读取为Numpy的数据
-            data = np.genfromtxt(path, delimiter=',', dtype=np.float32)
+            data = np.genfromtxt(path, delimiter=',', dtype=np.dtype('<f4'))
+            data_len = len(data)
             # 计算空值补缺的数量
-            empty_len = 1024 - len(data)
+            empty_len = 1024 - data_len
+
+            # 以下方法二选一
+            # 完整的1024个元数据=csv文件数据+在csv文件中随机指定下标数据
+            count = 0
+            while count < empty_len:
+                data = np.append(data, [data[random.randint(0, data_len-1)]], axis=0)
+                count += 1
             # 完整的1024个元数据=csv文件数据+空值数据
-            data_full = np.append(change_scale(data), np.empty([empty_len, 3], dtype=np.float32), axis=0)
+            # data = np.append(change_scale(data), change_scale(np.empty([empty_len, 3], dtype=np.dtype('<f4'))), axis=0)
+
             # 数据归并
-            sum_data = np.append(sum_data, [data_full], axis=0)
+            sum_data = np.append(sum_data, [change_scale(data)], axis=0)
             # 数据类型归并
             type_data = np.append(type_data, [[type_serial]], axis=0)
     return sum_data, type_data
 
 if __name__ == "__main__":
 
-    TRAIN_CSV_PATH = './pointdata2/traindata2/csv/'
-    TEST_CSV_PATH = './pointdata2/testdata2/csv/'
+    TRAIN_CSV_PATH = './pointdata3/traindata/csv/'
+    TEST_CSV_PATH = './pointdata3/testdata/csv/'
     train_csv_list = get_csv_list(TRAIN_CSV_PATH)
     test_csv_list = get_csv_list(TEST_CSV_PATH)
 
@@ -103,14 +113,14 @@ if __name__ == "__main__":
     open("plant_train.h5", 'w')
     with h5py.File('plant_train.h5', 'r+') as f:
         f.create_dataset('data', data=train_data)
-        f.create_dataset('faceId', data=np.empty([1024,1024], dtype=np.float32))
+        f.create_dataset('faceId', data=np.empty([1024,1024], dtype=np.dtype('<i4')))
         f.create_dataset('label', data=train_type_data)
         f.create_dataset('normal', data=train_data)
 
     open("plant_test.h5", 'w')
     with h5py.File('plant_test.h5', 'r+') as f:
         f.create_dataset('data', data=test_data)
-        f.create_dataset('faceId', data=np.empty([1024,1024], dtype=np.float32))
+        f.create_dataset('faceId', data=np.empty([1024,1024], dtype=np.dtype('<i4')))
         f.create_dataset('label', data=test_type_data)
         f.create_dataset('normal', data=test_data)
 

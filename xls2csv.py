@@ -11,7 +11,7 @@ def get_excel_list(path):
             excel_file_list.append(file_name)
     return excel_file_list
 
-excel_path_arr = [os.getcwd() + '/pointdata2/traindata2/', os.getcwd() + '/pointdata2/testdata2/']
+excel_path_arr = [os.getcwd() + '/pointdata3/traindata/', os.getcwd() + '/pointdata3/testdata/']
 
 for excel_path in excel_path_arr:
     for excel_file in get_excel_list(excel_path):
